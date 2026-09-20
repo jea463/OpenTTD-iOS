@@ -1,0 +1,36 @@
+name: iOS source build
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ios-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  simulator:
+    runs-on: macos-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install build tools
+        run: brew install cmake ninja
+      - name: Generate Xcode project
+        run: ./ios/configure-xcode.sh iphonesimulator
+      - name: Build for iOS Simulator
+        run: |
+          xcodebuild \
+            -project build/ios-xcode-iphonesimulator/openttd.xcodeproj \
+            -scheme openttd \
+            -configuration Debug \
+            -sdk iphonesimulator \
+            -destination 'generic/platform=iOS Simulator' \
+            CODE_SIGNING_ALLOWED=NO \
+            build
